@@ -44,7 +44,7 @@
    $a | Remove-RabbitMQVirtualHost
 
    Above example shows how to pipe both Virtual Host name and Computer Name to specify server from which the Virtual Host should be removed.
-   
+
    In the above example two Virtual Hosts named "vh1" and "vh2" will be removed from RabbitMQ local server, and one Virtual Host named "vh3" will be removed from the server 127.0.0.1.
 
 .INPUTS
@@ -70,7 +70,11 @@ function Remove-RabbitMQVirtualHost
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -81,8 +85,8 @@ function Remove-RabbitMQVirtualHost
     {
         if (-not $pscmdlet.ShouldProcess("server: $BaseUri", "Remove vhost(s): $(NamesToString $Name '(all)')")) {
             foreach ($qn in $Name)
-            { 
-                Write "Deleting Virtual Host(s) $qn (server=$BaseUri)" 
+            {
+                Write "Deleting Virtual Host(s) $qn (server=$BaseUri)"
                 $cnt++
             }
             return
@@ -91,7 +95,7 @@ function Remove-RabbitMQVirtualHost
         foreach($n in $Name)
         {
             $url = Join-Parts $BaseUri "/api/vhosts/$([System.Web.HttpUtility]::UrlEncode($n))"
-            $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Delete -ContentType "application/json"
+            $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -SkipCertificateCheck:$SkipCertificateCheck -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Delete -ContentType "application/json"
 
             Write-Verbose "Removed Virtual Host $n on server $BaseUri"
             $cnt++

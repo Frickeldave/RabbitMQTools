@@ -13,7 +13,7 @@
    You can pipe HostName to the cmdlet.
 
 .OUTPUTS
-   By default, the cmdlet returns list of RabbitMQ.ServerOverview objects which describe RabbitMQ server. 
+   By default, the cmdlet returns list of RabbitMQ.ServerOverview objects which describe RabbitMQ server.
 
 .EXAMPLE
    Get-RabbitMQOverview
@@ -45,7 +45,11 @@ function Get-RabbitMQOverview
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -64,7 +68,7 @@ function Get-RabbitMQOverview
 
         foreach ($cn in $BaseUri)
         {
-            $overview = GetItemsFromRabbitMQApi -BaseUri $cn $Credentials "overview"
+            $overview = GetItemsFromRabbitMQApi -BaseUri $cn $Credentials "overview" -SkipCertificateCheck:$SkipCertificateCheck
             $overview | Add-Member -NotePropertyName "HostName" -NotePropertyValue $cn
             $overview.PSObject.TypeNames.Insert(0, "RabbitMQ.ServerOverview")
 

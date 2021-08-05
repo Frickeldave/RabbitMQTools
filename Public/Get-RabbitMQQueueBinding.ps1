@@ -31,7 +31,7 @@
    You can pipe Name, VirtualHost and HostName to this cmdlet.
 
 .OUTPUTS
-   By default, the cmdlet returns list of RabbitMQ.QueueBinding objects which describe connections. 
+   By default, the cmdlet returns list of RabbitMQ.QueueBinding objects which describe connections.
 
 .LINK
     https://www.rabbitmq.com/management.html - information about RabbitMQ management plugin.
@@ -58,7 +58,11 @@ function Get-RabbitMQQueueBinding
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -72,7 +76,7 @@ function Get-RabbitMQQueueBinding
             $p = @{}
             $p.Add("Credentials", $Credentials)
             if ($BaseUri) { $p.Add("BaseUri", $BaseUri) }
-            
+
             $queues = Get-RabbitMQQueue @p | ? Name -eq $Name
 
             if (-not $queues) { return; }
@@ -91,7 +95,7 @@ function Get-RabbitMQQueueBinding
         {
             foreach ($n in $Name)
             {
-                $result = GetItemsFromRabbitMQApi -BaseUri $BaseUri $Credentials "queues/$([System.Web.HttpUtility]::UrlEncode($VirtualHost))/$([System.Web.HttpUtility]::UrlEncode($n))/bindings"
+                $result = GetItemsFromRabbitMQApi -BaseUri $BaseUri $Credentials "queues/$([System.Web.HttpUtility]::UrlEncode($VirtualHost))/$([System.Web.HttpUtility]::UrlEncode($n))/bindings" -SkipCertificateCheck:$SkipCertificateCheck
 
                 $result | Add-Member -NotePropertyName "HostName" -NotePropertyValue $BaseUri
 

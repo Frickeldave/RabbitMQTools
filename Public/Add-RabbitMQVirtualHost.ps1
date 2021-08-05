@@ -44,7 +44,7 @@
    $a | Add-RabbitMQVirtualHost
 
    Above example shows how to pipe both Virtual Host name and Computer Name to specify server on which the Virtual Host should be created.
-   
+
    In the above example two new Virtual Hosts named "vh1" and "vh1" will be created in RabbitMQ local server, and one Virtual Host named "vh3" will be created on the server 127.0.0.1.
 
 .INPUTS
@@ -70,7 +70,11 @@ function Add-RabbitMQVirtualHost
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials
+        [PSCredential]$Credentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -80,9 +84,9 @@ function Add-RabbitMQVirtualHost
     Process
     {
         if (-not $pscmdlet.ShouldProcess("server: $BaseUri", "Add vhost(s): $(NamesToString $Name '(all)')")) {
-            foreach ($qn in $Name) 
-            { 
-                Write "Creating new Virtual Host $qn on server $BaseUri" 
+            foreach ($qn in $Name)
+            {
+                Write "Creating new Virtual Host $qn on server $BaseUri"
                 $cnt++
             }
 
@@ -92,7 +96,7 @@ function Add-RabbitMQVirtualHost
         foreach($n in $Name)
         {
             $url = Join-Parts $BaseUri "/api/vhosts/$([System.Web.HttpUtility]::UrlEncode($n))"
-            $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Put -ContentType "application/json"
+            $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -SkipCertificateCheck:$SkipCertificateCheck -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Put -ContentType "application/json"
 
             Write-Verbose "Created Virtual Host $n on server $BaseUri"
             $cnt++

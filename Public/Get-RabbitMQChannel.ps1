@@ -56,7 +56,7 @@ function Get-RabbitMQChannel
         [parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
         [Alias("Channel", "ChannelName")]
         [string[]]$Name = "",
-               
+
         # Name of the computer hosting RabbitMQ server. Defalut value is localhost.
         [parameter(ValueFromPipelineByPropertyName=$true)]
         [Alias("HostName", "hn", "cn")]
@@ -69,7 +69,11 @@ function Get-RabbitMQChannel
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -79,8 +83,8 @@ function Get-RabbitMQChannel
     {
         if ($pscmdlet.ShouldProcess("server $BaseURI", "Get node(s): $(NamesToString $Name '(all)')"))
         {
-            $result = GetItemsFromRabbitMQApi -BaseUri $BaseURI $Credentials "channels"
-            
+            $result = GetItemsFromRabbitMQApi -BaseUri $BaseURI $Credentials "channels" -SkipCertificateCheck:$SkipCertificateCheck
+
             $result = ApplyFilter $result 'name' $Name
             if ($VirtualHost) { $result = ApplyFilter $result 'vhost' $VirtualHost }
 

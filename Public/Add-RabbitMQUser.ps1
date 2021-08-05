@@ -53,7 +53,11 @@ function Add-RabbitMQUser
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -69,7 +73,7 @@ function Add-RabbitMQUser
                 'password' = $NewPassword
                 'tags' = $Tag -join ','
             } | ConvertTo-Json
-            $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Put -ContentType "application/json" -Body $body
+            $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -SkipCertificateCheck:$SkipCertificateCheck -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Put -ContentType "application/json" -Body $body
 
             Write-Verbose "Created user $User with tags $Tag"
             $cnt++

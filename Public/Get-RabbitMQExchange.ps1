@@ -37,7 +37,7 @@
 
    This command gets a list of all Virtual Hosts which name starts with "private" or "public".
 
-.EXAMPLE 
+.EXAMPLE
     Get-RabbitMQVirtualHost marketing_private | select *
 
     This command selects all properties for given Virtual Host.
@@ -51,7 +51,7 @@
    You can pipe Virtual Host names to filter results.
 
 .OUTPUTS
-   By default, the cmdlet returns list of RabbitMQ.VirtualHost objects which describe Virtual Hosts. 
+   By default, the cmdlet returns list of RabbitMQ.VirtualHost objects which describe Virtual Hosts.
 
 .LINK
     https://www.rabbitmq.com/management.html - information about RabbitMQ management plugin.
@@ -70,7 +70,7 @@ function Get-RabbitMQExchange
         [parameter(ValueFromPipelineByPropertyName=$true)]
         [Alias("vh")]
         [string]$VirtualHost = "",
-        
+
         # Name of the computer hosting RabbitMQ server. Defalut value is localhost.
         [parameter(ValueFromPipelineByPropertyName=$true)]
         [Alias("HostName", "hn", "cn")]
@@ -78,7 +78,11 @@ function Get-RabbitMQExchange
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -88,8 +92,8 @@ function Get-RabbitMQExchange
     {
         if ($pscmdlet.ShouldProcess("server $BaseUri", "Get exchange(s): $(NamesToString $Name '(all)')"))
         {
-            $exchanges = GetItemsFromRabbitMQApi -BaseUri $BaseUri $Credentials "exchanges"
-            
+            $exchanges = GetItemsFromRabbitMQApi -BaseUri $BaseUri $Credentials "exchanges" -SkipCertificateCheck:$SkipCertificateCheck
+
             $result = ApplyFilter $exchanges 'vhost' $VirtualHost
             $result = ApplyFilter $result 'name' $Name
 

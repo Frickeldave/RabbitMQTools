@@ -42,7 +42,7 @@
    You can pipe Name to filter the results.
 
 .OUTPUTS
-   By default, the cmdlet returns list of RabbitMQ.Connection objects which describe connections. 
+   By default, the cmdlet returns list of RabbitMQ.Connection objects which describe connections.
 
 .LINK
     https://www.rabbitmq.com/management.html - information about RabbitMQ management plugin.
@@ -56,7 +56,7 @@ function Get-RabbitMQConnection
         [parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
         [Alias("Connection", "ConnectionName")]
         [string[]]$Name = "",
-               
+
         # Name of the computer hosting RabbitMQ server. Defalut value is localhost.
         [parameter(ValueFromPipelineByPropertyName=$true)]
         [Alias("HostName", "hn", "cn")]
@@ -64,7 +64,11 @@ function Get-RabbitMQConnection
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -74,8 +78,8 @@ function Get-RabbitMQConnection
     {
         if ($pscmdlet.ShouldProcess("server $BaseUri", "Get connection(s): $(NamesToString $Name '(all)')"))
         {
-            $result = GetItemsFromRabbitMQApi -BaseUri $BaseUri $Credentials "connections"
-            
+            $result = GetItemsFromRabbitMQApi -BaseUri $BaseUri $Credentials "connections" -SkipCertificateCheck:$SkipCertificateCheck
+
             $result = ApplyFilter $result 'name' $Name
 
             $result | Add-Member -NotePropertyName "HostName" -NotePropertyValue $BaseUri

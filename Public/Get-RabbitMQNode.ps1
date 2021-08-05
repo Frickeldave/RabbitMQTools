@@ -56,7 +56,7 @@ function Get-RabbitMQNode
         [parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
         [Alias("Node", "NodeName")]
         [string[]]$Name = "",
-               
+
         # Name of the computer hosting RabbitMQ server. Defalut value is localhost.
         [parameter(ValueFromPipelineByPropertyName=$true)]
         [Alias("HostName", "hn", "cn")]
@@ -64,7 +64,11 @@ function Get-RabbitMQNode
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -74,8 +78,8 @@ function Get-RabbitMQNode
     {
         if ($pscmdlet.ShouldProcess("server $BaseUri", "Get node(s): $(NamesToString $Name '(all)')"))
         {
-            $result = GetItemsFromRabbitMQApi -BaseUri $BaseUri $Credentials "nodes"
-            
+            $result = GetItemsFromRabbitMQApi -BaseUri $BaseUri $Credentials "nodes" -SkipCertificateCheck:$SkipCertificateCheck
+
             $result = ApplyFilter $result 'name' $Name
 
             $result | Add-Member -NotePropertyName "HostName" -NotePropertyValue $BaseUri

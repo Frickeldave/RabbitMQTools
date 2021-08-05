@@ -74,7 +74,7 @@ function Add-RabbitMQQueue
         # Determines whether the queue should be durable.
         [parameter(ValueFromPipelineByPropertyName=$true)]
         [switch]$Durable = $false,
-        
+
         # Determines whether the queue should be deleted automatically after all consumers have finished using it.
         [parameter(ValueFromPipelineByPropertyName=$true)]
         [switch]$AutoDelete = $false,
@@ -90,7 +90,11 @@ function Add-RabbitMQQueue
 
         # Optional arguments
         [Parameter(Mandatory=$false, ValueFromPipelineByPropertyName=$true)]
-        [hashtable]$Arguments
+        [hashtable]$Arguments,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -112,7 +116,7 @@ function Add-RabbitMQQueue
                 if ($Arguments -ne $null -and $Arguments.Count -gt 0) { $body.Add("arguments", $Arguments) }
 
                 $bodyJson = $body | ConvertTo-Json
-                $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Put -ContentType "application/json" -Body $bodyJson
+                $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -SkipCertificateCheck:$SkipCertificateCheck -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Put -ContentType "application/json" -Body $bodyJson
 
                 Write-Verbose "Created Queue $n on $BaseUri/$VirtualHost"
                 $cnt++

@@ -29,7 +29,7 @@
 .INPUTS
 
 .OUTPUTS
-   By default, the cmdlet returns list of RabbitMQ.QueueMessage objects which describe connections. 
+   By default, the cmdlet returns list of RabbitMQ.QueueMessage objects which describe connections.
 
 .LINK
     https://www.rabbitmq.com/management.html - information about RabbitMQ management plugin.
@@ -48,7 +48,7 @@ function Get-RabbitMQMessage
         [parameter(ValueFromPipelineByPropertyName=$true)]
         [Alias("vh", "vhost")]
         [string]$VirtualHost,
-        
+
         # Name of the computer hosting RabbitMQ server. Defalut value is localhost.
         [parameter(ValueFromPipelineByPropertyName=$true)]
         [Alias("HostName", "hn", "cn")]
@@ -78,7 +78,11 @@ function Get-RabbitMQMessage
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -93,7 +97,7 @@ function Get-RabbitMQMessage
             $p = @{}
             $p.Add("Credentials", $Credentials)
             if ($BaseUri) { $p.Add("BaseUri", $BaseUri) }
-            
+
             $queues = Get-RabbitMQQueue @p | ? Name -eq $Name
 
             if (-not $queues) { return; }
@@ -128,7 +132,7 @@ function Get-RabbitMQMessage
 
             Write-Debug "body: $bodyJson"
 
-            $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Post -ContentType "application/json" -Body $bodyJson
+            $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -SkipCertificateCheck:$SkipCertificateCheck -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Post -ContentType "application/json" -Body $bodyJson
 
             $result | Add-Member -NotePropertyName "QueueName" -NotePropertyValue $Name
 
@@ -153,7 +157,7 @@ function Get-RabbitMQMessage
                     {
                         SendItemsToOutput $result "RabbitMQ.QueueMessage" | ft -View Details
                     }
-                    
+
                     Default { SendItemsToOutput $result "RabbitMQ.QueueMessage" }
                 }
             }

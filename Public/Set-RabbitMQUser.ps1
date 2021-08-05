@@ -50,17 +50,21 @@ function Set-RabbitMQUser
         [parameter(ValueFromPipelineByPropertyName=$true)]
         [Alias("HostName", "hn", "cn")]
         [string]$BaseUri = $defaultComputerName,
-        
+
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
-    {       
+    {
         $user = Get-RabbitMQUser -Credentials $Credentials -BaseUri $BaseUri -Name $Name
         if (-not $user) { throw "User $Name doesn't exist in server $BaseUri" }
-        
+
         $cnt = 0
     }
     Process
@@ -73,7 +77,7 @@ function Set-RabbitMQUser
             if ($NewPassword) { $body.Add("password", $NewPassword) }
             if ($Tag) { $body.Add("tags", $Tag -join ',') } else { $body.Add("tags", $user.tags) }
             $bodyJson = $body | ConvertTo-Json
-            $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Put -ContentType "application/json" -Body $bodyJson
+            $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -SkipCertificateCheck:$SkipCertificateCheck -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Put -ContentType "application/json" -Body $bodyJson
 
             Write-Verbose "Update user $User"
             $cnt++

@@ -1,6 +1,6 @@
 ﻿<#
     .NOTES
-    Invoke-RestMethod parameter have changed somewhat in powershell core. 
+    Invoke-RestMethod parameter have changed somewhat in powershell core.
     See https://get-powershellblog.blogspot.co.uk/2017/11/powershell-core-web-cmdlets-in-depth.html#L08
 #>
 
@@ -83,7 +83,10 @@ function Invoke-RestMethod
         ${PassThru},
 
         [switch]
-        ${AllowEscapedDotsAndSlashes})
+        ${AllowEscapedDotsAndSlashes},
+
+        [switch]
+        ${SkipCertificateCheck})
 
     begin
     {
@@ -93,7 +96,7 @@ function Invoke-RestMethod
             {
                 $PSBoundParameters['OutBuffer'] = 1
             }
-            
+
             $wrappedCmd = $ExecutionContext.InvokeCommand.GetCommand('Microsoft.PowerShell.Utility\Invoke-RestMethod', [System.Management.Automation.CommandTypes]::Cmdlet)
 
             # check whether need to disable UnEscapingDotsAndSlases on UriParser
@@ -101,7 +104,7 @@ function Invoke-RestMethod
             $requiresDisableUnEscapingDotsAndSlashes = ($AllowEscapedDotsAndSlashes -and $Uri.OriginalString -match '%2f')
             # remove additional proxy parameter to prevent original function from failing
             if($PSBoundParameters['AllowEscapedDotsAndSlashes']) { $null = $PSBoundParameters.Remove('AllowEscapedDotsAndSlashes') }
-            
+
             #Invoke-RestMethod for Powershell Core
             If ($isPowershellCore) {
                 #For core you must explicitly define the Authentication method.
@@ -118,7 +121,7 @@ function Invoke-RestMethod
                         $PSBoundParameters['Headers'] = @{ 'content-length' = 0 }
                     }
                 }
-                
+
                 #It seems that sometimes errors occur if you don't yield a short time.
                 Start-Sleep -Milliseconds 100
                 $scriptCmd = {& $wrappedCmd @PSBoundParameters }
@@ -139,7 +142,7 @@ function Invoke-RestMethod
             }
 
             $steppablePipeline.Process($_)
-        } 
+        }
         finally {
             # Restore UnEscapingDotsAndSlashes on UriParser when necessary
             if ($requiresDisableUnEscapingDotsAndSlashes -and -not $isPowershellCore) {

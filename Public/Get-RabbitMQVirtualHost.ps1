@@ -37,7 +37,7 @@
 
    This command gets a list of all Virtual Hosts which name starts with "private" or "public".
 
-.EXAMPLE 
+.EXAMPLE
     Get-RabbitMQVirtualHost marketing_private | select *
 
     This command selects all properties for given Virtual Host.
@@ -51,7 +51,7 @@
    You can pipe Virtual Host names to filter results.
 
 .OUTPUTS
-   By default, the cmdlet returns list of RabbitMQ.VirtualHost objects which describe Virtual Hosts. 
+   By default, the cmdlet returns list of RabbitMQ.VirtualHost objects which describe Virtual Hosts.
 
 .LINK
     https://www.rabbitmq.com/management.html - information about RabbitMQ management plugin.
@@ -73,7 +73,11 @@ function Get-RabbitMQVirtualHost
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -83,7 +87,7 @@ function Get-RabbitMQVirtualHost
     {
         if ($pscmdlet.ShouldProcess("server $BaseUri", "Get vhost(s): $(NamesToString $Name '(all)')"))
         {
-            $vhosts = GetItemsFromRabbitMQApi -BaseUri $BaseUri $Credentials "vhosts"
+            $vhosts = GetItemsFromRabbitMQApi -BaseUri $BaseUri $Credentials "vhosts" -SkipCertificateCheck:$SkipCertificateCheck
             $result = ApplyFilter $vhosts "name" $Name
 
             foreach($i in $result)

@@ -44,7 +44,7 @@
    $a | Remove-RabbitMQExchange
 
    Above example shows how to pipe both Exchange name and Computer Name to specify server from which the Exchange should be removed.
-   
+
    In the above example two Exchanges named "e1" and "e2" will be removed from RabbitMQ local server, and one Exchange named "e3" will be removed from the server 127.0.0.1.
 
 .INPUTS
@@ -75,7 +75,11 @@ function Remove-RabbitMQExchange
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -89,8 +93,8 @@ function Remove-RabbitMQExchange
             foreach($n in $Name)
             {
                 $url = Join-Parts $BaseUri "/api/exchanges/$([System.Web.HttpUtility]::UrlEncode($VirtualHost))/$([System.Web.HttpUtility]::UrlEncode($n))"
-        
-                $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Delete
+
+                $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -SkipCertificateCheck:$SkipCertificateCheck -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Delete
 
                 Write-Verbose "Deleted Exchange $n on server $BaseUri, Virtual Host $VirtualHost"
                 $cnt++

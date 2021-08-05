@@ -41,7 +41,7 @@
    You can pipe Virtual Host and User names to filter results.
 
 .OUTPUTS
-   By default, the cmdlet returns list of RabbitMQ.Permission objects. 
+   By default, the cmdlet returns list of RabbitMQ.Permission objects.
 
 .LINK
     https://www.rabbitmq.com/management.html - information about RabbitMQ management plugin.
@@ -67,7 +67,11 @@ function Get-RabbitMQPermission
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -77,7 +81,7 @@ function Get-RabbitMQPermission
     {
         if ($pscmdlet.ShouldProcess("server $BaseUri", "Get permission(s) for VirtualHost = $(NamesToString $VirtualHost '(all)') and User = $(NamesToString $User '(all)')"))
         {
-            $result = GetItemsFromRabbitMQApi -BaseUri $BaseUri $Credentials "permissions"
+            $result = GetItemsFromRabbitMQApi -BaseUri $BaseUri $Credentials "permissions" -SkipCertificateCheck:$SkipCertificateCheck
             $result = ApplyFilter $result "vhost" $VirtualHost
             $result = ApplyFilter $result "user" $User
 

@@ -48,7 +48,7 @@
    $a | Add-RabbitMQExchange
 
    Above example shows how to pipe parameters for creating new exchanges.
-   
+
    In the above example three new exchanges will be created with different parameters.
 
 .INPUTS
@@ -75,11 +75,11 @@ function Add-RabbitMQExchange
         # Determines whether the exchange should be Durable.
         [parameter(ValueFromPipelineByPropertyName=$true)]
         [switch]$Durable,
-        
+
         # Determines whether the exchange will be deleted once all queues have finished using it.
         [parameter(ValueFromPipelineByPropertyName=$true)]
         [switch]$AutoDelete,
-        
+
         # Determines whether the exchange should be Internal.
         [parameter(ValueFromPipelineByPropertyName=$true)]
         [switch]$Internal,
@@ -101,7 +101,11 @@ function Add-RabbitMQExchange
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -110,7 +114,7 @@ function Add-RabbitMQExchange
     Process
     {
         if ($pscmdlet.ShouldProcess("server: $BaseUri, vhost: $VirtualHost", "Add exchange(s): $(NamesToString $Name '(all)')")) {
-            
+
             $body = @{
                 type = "$Type"
             }
@@ -126,8 +130,8 @@ function Add-RabbitMQExchange
             {
                 $url = Join-Parts $BaseUri "/api/exchanges/$([System.Web.HttpUtility]::UrlEncode($VirtualHost))/$([System.Web.HttpUtility]::UrlEncode($n))"
                 Write-Verbose "Invoking REST API: $url"
-        
-                $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Put -ContentType "application/json" -Body $bodyJson
+
+                $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -SkipCertificateCheck:$SkipCertificateCheck -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Put -ContentType "application/json" -Body $bodyJson
 
                 Write-Verbose "Created Exchange $n on server $BaseUri, Virtual Host $VirtualHost"
                 $cnt++

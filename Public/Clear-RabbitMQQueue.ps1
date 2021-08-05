@@ -40,7 +40,7 @@ function Clear-RabbitMQQueue
         [parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$true, Position=1)]
         [Alias("qn", "QueueName")]
         [string]$Name,
-        
+
         # Name of the computer hosting RabbitMQ server. Defalut value is localhost.
         [parameter(ValueFromPipelineByPropertyName=$true, Position=2)]
         [Alias("cn", "HostName")]
@@ -48,7 +48,11 @@ function Clear-RabbitMQQueue
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -61,7 +65,7 @@ function Clear-RabbitMQQueue
             $url = Join-Parts $BaseUri "/api/queues/$([System.Web.HttpUtility]::UrlEncode($VirtualHost))/$([System.Web.HttpUtility]::UrlEncode($Name))/contents"
             Write-Verbose "Invoking REST API: $url"
 
-            $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Delete
+            $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -SkipCertificateCheck:$SkipCertificateCheck -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Delete
         }
     }
     End

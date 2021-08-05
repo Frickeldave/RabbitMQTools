@@ -42,7 +42,7 @@
    $a | Remove-RabbitMQConnection
 
    Above example shows how to pipe both connection name and Computer Name to specify server.
-   
+
    The above example will close two connection named "c1" and "c2" to local server, and one connection named "c3" to the server 127.0.0.1.
 
 .INPUTS
@@ -68,7 +68,11 @@ function Remove-RabbitMQConnection
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -79,7 +83,7 @@ function Remove-RabbitMQConnection
     {
         if (-not $pscmdlet.ShouldProcess("server: $BaseUri", "Close connection(s): $(NamesToString $Name '(all)')")) {
             foreach ($qn in $Name)
-            { 
+            {
                 Write "Closing connection $qn to server=$BaseUri"
                 $cnt++
             }
@@ -89,8 +93,7 @@ function Remove-RabbitMQConnection
         foreach($n in $Name)
         {
             $url = Join-Parts $BaseUri "/api/connections/$([System.Web.HttpUtility]::UrlEncode($n))"
-            $result = Invoke-RestMethod $url -Credential $Credentials -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Delete
-
+            $result = Invoke-RestMethod $url -Credential $Credentials -SkipCertificateCheck:$SkipCertificateCheck -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Delete
             Write-Verbose "Closed connection $n to server $BaseUri"
             $cnt++
         }

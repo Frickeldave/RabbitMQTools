@@ -60,14 +60,18 @@ function Add-RabbitMQPermission
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
-    {      
-        $p = Get-RabbitMQPermission -BaseUri $BaseUri -Credentials $Credentials -VirtualHost $VirtualHost -User $User
+    {
+        $p = Get-RabbitMQPermission -BaseUri $BaseUri -Credentials $Credentials -SkipCertificateCheck:$SkipCertificateCheck -VirtualHost $VirtualHost -User $User
         if ($p) { throw "Permissions to virtual host $VirtualHost for user $User already exist. To change permissions use Set-RabbitMQPermission cmdlet." }
-        
+
         $cnt = 0
     }
     Process
@@ -78,9 +82,9 @@ function Add-RabbitMQPermission
             $body = @{
                 'configure' = $Configure
                 'read' = $Read
-                'write' = $Write                
+                'write' = $Write
             } | ConvertTo-Json
-            $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Put -ContentType "application/json" -Body $body
+            $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -SkipCertificateCheck:$SkipCertificateCheck -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Put -ContentType "application/json" -Body $body
 
             Write-Verbose "Created permission to $VirtualHost for $User : $Configure, $Read, $Write"
             $cnt++

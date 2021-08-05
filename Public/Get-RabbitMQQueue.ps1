@@ -66,7 +66,7 @@ function Get-RabbitMQQueue
         [parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
         [Alias("queue", "QueueName")]
         [string[]]$Name = "",
-               
+
         # Name of the computer hosting RabbitMQ server. Defalut value is localhost.
         [parameter(ValueFromPipelineByPropertyName=$true)]
         [Alias("HostName", "hn", "cn")]
@@ -86,7 +86,11 @@ function Get-RabbitMQQueue
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -96,11 +100,11 @@ function Get-RabbitMQQueue
     {
         if ($pscmdlet.ShouldProcess("server $BaseUri", "Get queues(s): $(NamesToString $Name '(all)')"))
         {
-            $result = GetItemsFromRabbitMQApi -BaseUri $BaseUri $Credentials "queues"
-            
+            $result = GetItemsFromRabbitMQApi -BaseUri $BaseUri $Credentials "queues" -SkipCertificateCheck:$SkipCertificateCheck
+
             $result = ApplyFilter $result 'name' $Name
             if ($VirtualHost) { $result = ApplyFilter $result 'vhost' $VirtualHost }
-            
+
             foreach ($item in $result)
             {
                 if ($item.messages -eq $null) { $item | Add-Member -MemberType NoteProperty -Name messages -Value 0 }
@@ -108,8 +112,8 @@ function Get-RabbitMQQueue
                 if ($item.messages_unacknowledged -eq $null) { $item | Add-Member -MemberType NoteProperty -Name messages_unacknowledged -Value 0 }
             }
 
-            if ($NotEmpty) { 
-                $result = $result | ? messages -ne 0 
+            if ($NotEmpty) {
+                $result = $result | ? messages -ne 0
             }
 
             $result | Add-Member -NotePropertyName "HostName" -NotePropertyValue $BaseUri

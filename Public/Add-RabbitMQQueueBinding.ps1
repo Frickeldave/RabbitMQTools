@@ -71,14 +71,18 @@ function Add-RabbitMQQueueBinding
         [parameter(ValueFromPipelineByPropertyName=$true, Position=4)]
         [Alias("HostName", "hn", "cn")]
         [string]$BaseUri = $defaultComputerName,
-        
+
   		# Switch to unescape web characters (For x-jms-topic).
         [parameter(Mandatory=$false, ValueFromPipelineByPropertyName=$true, Position=5)]
         [switch]$DontEscape,
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials 
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -108,7 +112,7 @@ function Add-RabbitMQQueueBinding
 				{
 					$bodyJson = $body | ConvertTo-Json -Depth 3 -Compress
 				}
-                $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Post -ContentType "application/json" -Body $bodyJson
+                $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -SkipCertificateCheck:$SkipCertificateCheck -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Post -ContentType "application/json" -Body $bodyJson
 
                 Write-Verbose "Bound exchange $ExchangeName to queue $Name $n on $BaseUri/$VirtualHost"
                 $cnt++

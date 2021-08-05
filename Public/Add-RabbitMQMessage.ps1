@@ -29,7 +29,7 @@
 .INPUTS
 
 .OUTPUTS
-   By default, the cmdlet returns list of RabbitMQ.QueueMessage objects which describe connections. 
+   By default, the cmdlet returns list of RabbitMQ.QueueMessage objects which describe connections.
 
 .LINK
     https://www.rabbitmq.com/management.html - information about RabbitMQ management plugin.
@@ -53,7 +53,7 @@ function Add-RabbitMQMessage
         [parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$true, Position=2)]
         [Alias("rk")]
         [string]$RoutingKey,
-        
+
         # Massage's payload
         [parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$true, Position=3)]
         [string]$Payload,
@@ -69,7 +69,11 @@ function Add-RabbitMQMessage
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -92,12 +96,12 @@ function Add-RabbitMQMessage
 
             $bodyJson = $body | ConvertTo-Json
 
-            
+
             $retryCounter = 0
 
             while ($retryCounter -lt 3)
             {
-                $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Post -ContentType "application/json" -Body $bodyJson
+                $result = Invoke-RestMethod $url -Credential $Credentials -AllowEscapedDotsAndSlashes -SkipCertificateCheck:$SkipCertificateCheck -DisableKeepAlive:$InvokeRestMethodKeepAlive -ErrorAction Continue -Method Post -ContentType "application/json" -Body $bodyJson
 
                 if ($result.routed -ne $true)
                 {

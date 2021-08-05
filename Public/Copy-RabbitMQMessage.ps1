@@ -7,15 +7,15 @@
    Both source and destination queues must be in the same Virtual Host.
    The "exchange" and "routing_key" properties on copied messages will ba changed.
 
-   Copying messages is done by creating new exchange, binding both from and to queues to it and republishing messages from source queue. 
-   
+   Copying messages is done by creating new exchange, binding both from and to queues to it and republishing messages from source queue.
+
    The cmdlet is not designed to be used on sensitive data.
 
    WARNING
-     This operation is not transactional and may result in not all messages being copied or some messages being duplicated. 
+     This operation is not transactional and may result in not all messages being copied or some messages being duplicated.
      Also, if there are new messages published to the source queue or messages are consumed, then the operation may fail with unexpected result.
      Because of the nature of copying messages, this operation may change order of messages in the source queue.
-     
+
 
    To copy messages on remote server you need to provide -HostName parameter.
 
@@ -41,7 +41,7 @@
 .INPUTS
 
 .OUTPUTS
-   By default, the cmdlet returns list of RabbitMQ.QueueMessage objects which describe connections. 
+   By default, the cmdlet returns list of RabbitMQ.QueueMessage objects which describe connections.
 
 .LINK
     https://www.rabbitmq.com/management.html - information about RabbitMQ management plugin.
@@ -77,7 +77,11 @@ function Copy-RabbitMQMessage
 
         # Credentials to use when logging to RabbitMQ server.
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -92,13 +96,13 @@ function Copy-RabbitMQMessage
         {
             $ename = "RabbitMQTools_copy"
             $routingKey = "RabbitMQTools_copy"
-            Add-RabbitMQExchange -BaseUri $BaseUri -VirtualHost $VirtualHost -Type fanout -AutoDelete -Name $ename -Credentials $Credentials
-            Add-RabbitMQQueueBinding -BaseUri $BaseUri -VirtualHost $VirtualHost -ExchangeName $ename -Name $SourceQueueName  -RoutingKey $routingKey -Credentials $Credentials
-            Add-RabbitMQQueueBinding -BaseUri $BaseUri -VirtualHost $VirtualHost -ExchangeName $ename -Name $DestinationQueueName -RoutingKey $routingKey -Credentials $Credentials
+            Add-RabbitMQExchange -BaseUri $BaseUri -VirtualHost $VirtualHost -Type fanout -AutoDelete -Name $ename -Credentials $Credentials -SkipCertificateCheck:$SkipCertificateCheck
+            Add-RabbitMQQueueBinding -BaseUri $BaseUri -VirtualHost $VirtualHost -ExchangeName $ename -Name $SourceQueueName  -RoutingKey $routingKey -Credentials $Credentials -SkipCertificateCheck:$SkipCertificateCheck
+            Add-RabbitMQQueueBinding -BaseUri $BaseUri -VirtualHost $VirtualHost -ExchangeName $ename -Name $DestinationQueueName -RoutingKey $routingKey -Credentials $Credentials -SkipCertificateCheck:$SkipCertificateCheck
 
             try
             {
-                $m = Get-RabbitMQMessage -Credentials $Credentials -BaseUri $BaseUri -VirtualHost $VirtualHost -Name $SourceQueueName
+                $m = Get-RabbitMQMessage -Credentials $Credentials -SkipCertificateCheck:$SkipCertificateCheck -BaseUri $BaseUri -VirtualHost $VirtualHost -Name $SourceQueueName
                 $c = $m.message_count + 1
 
                 if ($Count -eq 0 -or $Count -gt $c ) { $Count = $c }
@@ -107,13 +111,13 @@ function Copy-RabbitMQMessage
                 for ($i = 1; $i -le $Count; $i++)
                 {
                     # get message to be copies, but do not remove it from the server yet.
-                    $m = Get-RabbitMQMessage -Credentials $Credentials -BaseUri $BaseUri -VirtualHost $VirtualHost -Name $SourceQueueName
+                    $m = Get-RabbitMQMessage -Credentials $Credentials -BaseUri $BaseUri -VirtualHost $VirtualHost -Name $SourceQueueName -SkipCertificateCheck:$SkipCertificateCheck
 
                     # publish message to copying exchange, this will publish it onto dest queue as well as src queue.
-                    Add-RabbitMQMessage -Credentials $Credentials -BaseUri $BaseUri -VirtualHost $VirtualHost -ExchangeName $ename -RoutingKey $routingKey -Payload $m.payload -Properties $m.properties
+                    Add-RabbitMQMessage -Credentials $Credentials  -SkipCertificateCheck:$SkipCertificateCheck -BaseUri $BaseUri -VirtualHost $VirtualHost -ExchangeName $ename -RoutingKey $routingKey -Payload $m.payload -Properties $m.properties
 
                     # remove message from src queue. It has been published step earlier.
-                    if ($requiresMessageRemoval) { $m = Get-RabbitMQMessage -Credentials $Credentials -BaseUri $BaseUri -VirtualHost $VirtualHost -Name $SourceQueueName -Remove }
+                    if ($requiresMessageRemoval) { $m = Get-RabbitMQMessage -Credentials $Credentials -SkipCertificateCheck:$SkipCertificateCheck -BaseUri $BaseUri -VirtualHost $VirtualHost -Name $SourceQueueName -Remove }
 
                     [int]$p = ($i * 100) / $Count
                     if ($p -gt 100) { $p = 100 }
@@ -125,7 +129,7 @@ function Copy-RabbitMQMessage
             }
             finally
             {
-                Remove-RabbitMQExchange -Credentials $Credentials -BaseUri $BaseUri -VirtualHost $VirtualHost -Name $ename -Confirm:$false
+                Remove-RabbitMQExchange -Credentials $Credentials -SkipCertificateCheck:$SkipCertificateCheck -BaseUri $BaseUri -VirtualHost $VirtualHost -Name $ename -Confirm:$false
             }
         }
     }

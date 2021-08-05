@@ -40,7 +40,7 @@
    You can pipe Names and HostNames to filter results.
 
 .OUTPUTS
-   By default, the cmdlet returns list of RabbitMQ.User objects which describe user. 
+   By default, the cmdlet returns list of RabbitMQ.User objects which describe user.
 
 .LINK
     https://www.rabbitmq.com/management.html - information about RabbitMQ management plugin.
@@ -58,12 +58,16 @@ function Get-RabbitMQUser
         [parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
         [Alias("cn", "HostName")]
         [string]$BaseUri = $defaultComputerName,
-        
+
         [ValidateSet("Default", "Flat")]
         [string]$View,
 
         [Parameter(Mandatory=$false)]
-        [PSCredential]$Credentials = $defaultCredentials
+        [PSCredential]$Credentials = $defaultCredentials,
+
+        # Disable certificate check
+        [Parameter(Mandatory=$false)]
+        [switch]${SkipCertificateCheck}
     )
 
     Begin
@@ -73,10 +77,10 @@ function Get-RabbitMQUser
     {
         if ($pscmdlet.ShouldProcess("server $BaseUri", "Get user(s)"))
         {
-            $result = GetItemsFromRabbitMQApi -BaseUri $BaseUri $Credentials "users"
+            $result = GetItemsFromRabbitMQApi -BaseUri $BaseUri $Credentials "users" -SkipCertificateCheck:$SkipCertificateCheck
             $result = ApplyFilter $result 'name' $Name
             $result | Add-Member -NotePropertyName "HostName" -NotePropertyValue $BaseUri
- 
+
             if (-not $View) { SendItemsToOutput $result "RabbitMQ.User" }
             else { SendItemsToOutput $result "RabbitMQ.User" | ft -View $View }
         }
